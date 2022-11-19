@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Highlighter from "react-highlight-words";
+import { CSVLink } from "react-csv";
 
 // Import Components
 import {
@@ -13,10 +14,12 @@ import {
   InputNumber,
 } from "antd";
 
+// Import Icons
+import { DownloadOutlined, SearchOutlined } from "@ant-design/icons";
+
 // Import Actions & Methods
 import { getPosts, deletePost, updatePost } from "../redux/actions/postActions";
 import { useDispatch, useSelector } from "react-redux";
-import { SearchOutlined } from "@ant-design/icons";
 
 // Import Constants
 const { Title } = Typography;
@@ -101,6 +104,7 @@ const DataTable = () => {
     setSortedInfo({});
     setSearchText("");
     _setTableData();
+    console.log("reset");
   };
 
   // Handle Delete
@@ -160,19 +164,6 @@ const DataTable = () => {
     setIsFetched(true);
   }
 
-  // Handle Search Column
-  const _handleSearchCol = (selectedKeys, confirm, dataIndex) => {
-    confirm();
-    setSearchColText(selectedKeys[0]);
-    setSearchedCol(dataIndex);
-  };
-
-  // Handle Reset Column Search
-  const _handleResetCol = (clearFilters) => {
-    clearFilters();
-    setSearchColText("");
-  };
-
   // Get Column Search Props
   const _getColumnSearchProps = (dataIndex) => ({
     filterDropdown: ({
@@ -180,7 +171,6 @@ const DataTable = () => {
       selectedKeys,
       confirm,
       clearFilters,
-      close,
     }) => (
       <div
         style={{
@@ -212,7 +202,9 @@ const DataTable = () => {
             Search
           </Button>
           <Button
-            onClick={() => _handleResetCol(clearFilters)}
+            onClick={() =>
+              clearFilters && _handleResetCol(clearFilters, confirm)
+            }
             size="small"
             style={{ width: 90 }}
           >
@@ -246,6 +238,20 @@ const DataTable = () => {
         text
       ),
   });
+
+  // Handle Search Column
+  const _handleSearchCol = (selectedKeys, confirm, dataIndex) => {
+    confirm();
+    setSearchColText(selectedKeys[0]);
+    setSearchedCol(dataIndex);
+  };
+
+  // Handle Reset Column Search
+  const _handleResetCol = (clearFilters, confirm) => {
+    clearFilters();
+    setSearchColText("");
+    confirm();
+  };
 
   // Set Table Columns
   const columns = [
@@ -373,7 +379,9 @@ const DataTable = () => {
 
   return (
     <div>
-      <Title level={2}>DataTable</Title>
+      <Title style={{ marginTop: 5, marginBottom: 5 }} level={2}>
+        DataTable
+      </Title>
       <Space
         style={{
           marginBottom: 16,
@@ -393,6 +401,24 @@ const DataTable = () => {
           Search
         </Button>
         <Button onClick={_onReset}>Reset</Button>
+        <Button
+          style={{ backgroundColor: "#c2115e", color: "#fff" }}
+          icon={
+            <DownloadOutlined
+              style={{
+                marginRight: 5,
+                color: "#fff",
+              }}
+            />
+          }
+        >
+          <CSVLink
+            style={{ color: "#fff" }}
+            data={filteredData?.length > 0 ? filteredData : dataSource}
+          >
+            Export
+          </CSVLink>
+        </Button>
       </Space>
       <Form form={form} component={false}>
         <Table
