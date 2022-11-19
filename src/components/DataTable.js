@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Highlighter from "react-highlight-words";
 
 // Import Components
 import {
@@ -15,6 +16,7 @@ import {
 // Import Actions & Methods
 import { getPosts, deletePost, updatePost } from "../redux/actions/postActions";
 import { useDispatch, useSelector } from "react-redux";
+import { SearchOutlined } from "@ant-design/icons";
 
 // Import Constants
 const { Title } = Typography;
@@ -38,6 +40,9 @@ const DataTable = () => {
   const [form] = Form.useForm();
   const [editingKey, setEditingKey] = useState("");
   const isEditing = (record) => record.key === editingKey;
+
+  const [searchColText, setSearchColText] = useState("");
+  const [searchedCol, setSearchedCol] = useState("");
 
   // Get Posts
   useEffect(() => {
@@ -133,6 +138,7 @@ const DataTable = () => {
     setDataSource(filteredData);
   };
 
+  // Set Table Data With Key
   const _setTableData = () => {
     setDataSource([]);
     posts.forEach((post, index) => {
@@ -154,6 +160,93 @@ const DataTable = () => {
     setIsFetched(true);
   }
 
+  // Handle Search Column
+  const _handleSearchCol = (selectedKeys, confirm, dataIndex) => {
+    confirm();
+    setSearchColText(selectedKeys[0]);
+    setSearchedCol(dataIndex);
+  };
+
+  // Handle Reset Column Search
+  const _handleResetCol = (clearFilters) => {
+    clearFilters();
+    setSearchColText("");
+  };
+
+  // Get Column Search Props
+  const _getColumnSearchProps = (dataIndex) => ({
+    filterDropdown: ({
+      setSelectedKeys,
+      selectedKeys,
+      confirm,
+      clearFilters,
+      close,
+    }) => (
+      <div
+        style={{
+          padding: 8,
+        }}
+      >
+        <Input
+          placeholder={`Search ${dataIndex}`}
+          value={selectedKeys[0]}
+          onChange={(e) =>
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
+          onPressEnter={() =>
+            _handleSearchCol(selectedKeys, confirm, dataIndex)
+          }
+          style={{
+            marginBottom: 8,
+            display: "block",
+          }}
+        ></Input>
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => _handleSearchCol(selectedKeys, confirm, dataIndex)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Search
+          </Button>
+          <Button
+            onClick={() => _handleResetCol(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered) => (
+      <SearchOutlined style={{ color: filtered ? "#1890ff" : undefined }} />
+    ),
+    onFilter: (value, record) =>
+      record[dataIndex]
+        ? record[dataIndex]
+            .toString()
+            .toLowerCase()
+            .includes(value.toLowerCase())
+        : "",
+    render: (text) =>
+      searchedCol === dataIndex ? (
+        <Highlighter
+          highlightStyle={{
+            backgroundColor: "#ffc069",
+            padding: 0,
+          }}
+          searchWords={[searchColText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ""}
+        />
+      ) : (
+        text
+      ),
+  });
+
   // Set Table Columns
   const columns = [
     { key: 1, title: "ID", dataIndex: "ID" },
@@ -164,6 +257,7 @@ const DataTable = () => {
       editable: true,
       sorter: (a, b) => a.title.length - b.title.length,
       sortOrder: sortedInfo.columnKey === "title" && sortedInfo.order,
+      ..._getColumnSearchProps("title"),
     },
     {
       key: 3,
@@ -172,6 +266,7 @@ const DataTable = () => {
       editable: true,
       sorter: (a, b) => a.body.length - b.body.length,
       sortOrder: sortedInfo.columnKey === "body" && sortedInfo.order,
+      ..._getColumnSearchProps("body"),
     },
     {
       key: 4,
@@ -181,6 +276,7 @@ const DataTable = () => {
       editable: true,
       sorter: (a, b) => a.age - b.age,
       sortOrder: sortedInfo.columnKey === "age" && sortedInfo.order,
+      ..._getColumnSearchProps("age"),
     },
     {
       key: 5,
@@ -222,7 +318,7 @@ const DataTable = () => {
     },
   ];
 
-  // Set Editable Row
+  // Set Editable Columns
   const _mergedColumns = columns.map((col) => {
     if (!col.editable) {
       return col;
