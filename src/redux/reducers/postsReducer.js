@@ -26,6 +26,7 @@ const postsSlice = createSlice({
       state.isSuccess = false;
       state.error = action.payload;
     });
+
     // DELETE POST
     builder.addCase(deletePost.fulfilled, (state, action) => {
       // state.loading = false;
@@ -36,6 +37,7 @@ const postsSlice = createSlice({
       state.isSuccess = false;
       state.error = action.payload;
     });
+
     // UPDATE POST
     builder.addCase(updatePost.fulfilled, (state, action) => {
       const index = state.posts.findIndex(

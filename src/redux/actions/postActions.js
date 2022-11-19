@@ -26,7 +26,6 @@ export const deletePost = createAsyncThunk("posts/deletePost", async (id) => {
 export const updatePost = createAsyncThunk(
   "posts/updatePost",
   async (updatedPost) => {
-    console.log(updatedPost, "action");
     try {
       const res = await axios.put(`${BASE_URL}/${updatedPost.id}`, updatedPost);
       return res.data;

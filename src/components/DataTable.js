@@ -19,20 +19,38 @@ import { useDispatch, useSelector } from "react-redux";
 // Import Constants
 const { Title } = Typography;
 
+// Table Styles
+const TableStyle = {
+  paddingLeft: 20,
+  paddingRight: 20,
+};
+
 const DataTable = () => {
   const dispatch = useDispatch();
+  // Table States
   const [dataSource, setDataSource] = useState([]);
   const [isFetched, setIsFetched] = useState(false);
+  const [sortedInfo, setSortedInfo] = useState({});
 
-  // Table States
+  // Form States
   const [form] = Form.useForm();
   const [editingKey, setEditingKey] = useState("");
   const isEditing = (record) => record.key === editingKey;
 
+  // Get Posts
+  useEffect(() => {
+    dispatch(getPosts());
+  }, []);
+
+  // Get Data From Redux Store
+  const { posts, loading, isSuccess } = useSelector((state) => state.posts);
+
+  // On Cancel
   const _onCancel = () => {
     setEditingKey("");
   };
 
+  // On Save
   const _onSave = async (record) => {
     try {
       const row = await form.validateFields();
@@ -60,6 +78,7 @@ const DataTable = () => {
     }
   };
 
+  // On Edit
   const _onEdit = (record) => {
     form.setFieldsValue({
       ...record,
@@ -70,18 +89,24 @@ const DataTable = () => {
     setEditingKey(record.key);
   };
 
-  // Table Style
-  const TableStyle = {
-    paddingLeft: 20,
-    paddingRight: 20,
+  // On Reset
+  const _onReset = () => {
+    setSortedInfo({});
   };
 
-  // Get Posts
-  useEffect(() => {
-    dispatch(getPosts());
-  }, []);
+  // Handle Delete
+  const _handleDelete = (record) => {
+    dispatch(deletePost(record.id));
+    if (isSuccess) {
+      setDataSource(dataSource.filter((data) => data.id !== record.id));
+    }
+  };
 
-  const { posts, loading, isSuccess } = useSelector((state) => state.posts);
+  // Handle On Change
+  const _handleChange = (...sorter) => {
+    const { order, field } = sorter[2];
+    setSortedInfo({ columnKey: field, order });
+  };
 
   // Set Table Data Source
   if (posts.length > 0 && !isFetched) {
@@ -99,24 +124,33 @@ const DataTable = () => {
     setIsFetched(true);
   }
 
-  // Handle Delete
-  const _handleDelete = (record) => {
-    dispatch(deletePost(record.id));
-    if (isSuccess) {
-      setDataSource(dataSource.filter((data) => data.id !== record.id));
-    }
-  };
-
+  // Set Table Columns
   const columns = [
     { key: 1, title: "ID", dataIndex: "ID" },
-    { key: 2, title: "Title", dataIndex: "title", editable: true },
-    { key: 3, title: "Message", dataIndex: "body", editable: true },
+    {
+      key: 2,
+      title: "Title",
+      dataIndex: "title",
+      editable: true,
+      sorter: (a, b) => a.title.length - b.title.length,
+      sortOrder: sortedInfo.columnKey === "title" ? sortedInfo.order : null,
+    },
+    {
+      key: 3,
+      title: "Message",
+      dataIndex: "body",
+      editable: true,
+      sorter: (a, b) => a.body.length - b.body.length,
+      sortOrder: sortedInfo.columnKey === "body" ? sortedInfo.order : null,
+    },
     {
       key: 4,
       title: "Age",
       dataIndex: "age",
       align: "center",
       editable: true,
+      sorter: (a, b) => a.age - b.age,
+      sortOrder: sortedInfo.columnKey === "age" ? sortedInfo.order : null,
     },
     {
       key: 5,
@@ -158,7 +192,7 @@ const DataTable = () => {
     },
   ];
 
-  // Create Editable Row
+  // Set Editable Row
   const _mergedColumns = columns.map((col) => {
     if (!col.editable) {
       return col;
@@ -175,7 +209,7 @@ const DataTable = () => {
     };
   });
 
-  // Editable Cell
+  // Set Editable Cell
   const _EditableCell = ({
     editing,
     dataIndex,
@@ -213,6 +247,15 @@ const DataTable = () => {
   return (
     <div>
       <Title level={2}>DataTable</Title>
+      <Space
+        style={{
+          marginBottom: 16,
+        }}
+      >
+        <Button onClick={_onReset}>Reset</Button>
+        {/* <Button onClick={clearFilters}>Clear filters</Button> */}
+        {/* <Button onClick={clearAll}>Clear filters and sorters</Button> */}
+      </Space>
       <Form form={form} component={false}>
         <Table
           components={{
@@ -228,6 +271,7 @@ const DataTable = () => {
           pagination={{
             position: ["bottomCenter"],
           }}
+          onChange={_handleChange}
         ></Table>
       </Form>
     </div>
