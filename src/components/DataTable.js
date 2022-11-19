@@ -31,6 +31,8 @@ const DataTable = () => {
   const [dataSource, setDataSource] = useState([]);
   const [isFetched, setIsFetched] = useState(false);
   const [sortedInfo, setSortedInfo] = useState({});
+  const [searchText, setSearchText] = useState("");
+  let [filteredData] = useState([]);
 
   // Form States
   const [form] = Form.useForm();
@@ -92,6 +94,8 @@ const DataTable = () => {
   // On Reset
   const _onReset = () => {
     setSortedInfo({});
+    setSearchText("");
+    _setTableData();
   };
 
   // Handle Delete
@@ -102,14 +106,35 @@ const DataTable = () => {
     }
   };
 
-  // Handle On Change
+  // Handle Change
   const _handleChange = (...sorter) => {
     const { order, field } = sorter[2];
     setSortedInfo({ columnKey: field, order });
   };
 
-  // Set Table Data Source
-  if (posts.length > 0 && !isFetched) {
+  // Handle Search
+  const _handleSearchText = (e) => {
+    setSearchText(e.target.value);
+    if (e.target.value === "") {
+      _setTableData();
+    }
+  };
+
+  // Handle Global Search
+  const _handleGlobalSearch = () => {
+    filteredData = dataSource.filter((value) => {
+      return (
+        value.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        value.body.toLowerCase().includes(searchText.toLowerCase()) ||
+        value.age.toString().includes(searchText)
+      );
+    });
+
+    setDataSource(filteredData);
+  };
+
+  const _setTableData = () => {
+    setDataSource([]);
     posts.forEach((post, index) => {
       setDataSource((prev) => [
         ...prev,
@@ -121,6 +146,11 @@ const DataTable = () => {
         },
       ]);
     });
+  };
+
+  // Set Table Data Source
+  if (posts?.length > 0 && !isFetched) {
+    _setTableData();
     setIsFetched(true);
   }
 
@@ -133,7 +163,7 @@ const DataTable = () => {
       dataIndex: "title",
       editable: true,
       sorter: (a, b) => a.title.length - b.title.length,
-      sortOrder: sortedInfo.columnKey === "title" ? sortedInfo.order : null,
+      sortOrder: sortedInfo.columnKey === "title" && sortedInfo.order,
     },
     {
       key: 3,
@@ -141,7 +171,7 @@ const DataTable = () => {
       dataIndex: "body",
       editable: true,
       sorter: (a, b) => a.body.length - b.body.length,
-      sortOrder: sortedInfo.columnKey === "body" ? sortedInfo.order : null,
+      sortOrder: sortedInfo.columnKey === "body" && sortedInfo.order,
     },
     {
       key: 4,
@@ -150,7 +180,7 @@ const DataTable = () => {
       align: "center",
       editable: true,
       sorter: (a, b) => a.age - b.age,
-      sortOrder: sortedInfo.columnKey === "age" ? sortedInfo.order : null,
+      sortOrder: sortedInfo.columnKey === "age" && sortedInfo.order,
     },
     {
       key: 5,
@@ -244,17 +274,29 @@ const DataTable = () => {
       </td>
     );
   };
+
   return (
     <div>
       <Title level={2}>DataTable</Title>
       <Space
         style={{
           marginBottom: 16,
+          marginLeft: 20,
+          display: "flex",
+          justifyContent: "flex-start",
         }}
       >
+        <Input
+          placeholder="Enter Search Text"
+          onChange={(e) => _handleSearchText(e)}
+          type="text"
+          allowClear
+          value={searchText}
+        />
+        <Button type="primary" onClick={_handleGlobalSearch}>
+          Search
+        </Button>
         <Button onClick={_onReset}>Reset</Button>
-        {/* <Button onClick={clearFilters}>Clear filters</Button> */}
-        {/* <Button onClick={clearAll}>Clear filters and sorters</Button> */}
       </Space>
       <Form form={form} component={false}>
         <Table

@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { deletePost, getPosts, updatePost } from "../actions/postActions";
 
 const initialState = {
-  posts: [],
+  posts: null,
   isSuccess: false,
   error: null,
   loading: false,
@@ -18,7 +18,7 @@ const postsSlice = createSlice({
     });
     builder.addCase(getPosts.fulfilled, (state, action) => {
       state.loading = false;
-      state.posts.push(...action.payload);
+      state.posts = action.payload;
       state.isSuccess = true;
     });
     builder.addCase(getPosts.rejected, (state, action) => {
